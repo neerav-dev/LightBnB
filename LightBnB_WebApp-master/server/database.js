@@ -19,16 +19,11 @@ const pool = new Pool({
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithEmail = function(email) {
-  let user;
-  for (const userId in users) {
-    user = users[userId];
-    if (user.email.toLowerCase() === email.toLowerCase()) {
-      break;
-    } else {
-      user = null;
-    }
-  }
-  return Promise.resolve(user);
+  const queryString = `SELECT id, name, email, password FROM users WHERE email = $1;`;
+  return pool.query(queryString, [email])
+  .then((result) => {
+    return result.rows[0];
+  });
 }
 exports.getUserWithEmail = getUserWithEmail;
 
@@ -38,7 +33,11 @@ exports.getUserWithEmail = getUserWithEmail;
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithId = function(id) {
-  return Promise.resolve(users[id]);
+  const queryString = `SELECT id, name, email, password FROM users WHERE id = $1;`;
+  return pool.query(queryString, [id])
+  .then((result) => {
+    return result.rows[0];
+  });
 }
 exports.getUserWithId = getUserWithId;
 
@@ -49,10 +48,13 @@ exports.getUserWithId = getUserWithId;
  * @return {Promise<{}>} A promise to the user.
  */
 const addUser =  function(user) {
-  const userId = Object.keys(users).length + 1;
-  user.id = userId;
-  users[userId] = user;
-  return Promise.resolve(user);
+  console.log(user);
+  const queryString = `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *;`;
+  return pool.query(queryString, [user.name, user.email, user.password])
+  .then((result) => {
+    console.log(result.rows)
+    return result.rows[0];
+  });
 }
 exports.addUser = addUser;
 
@@ -78,15 +80,10 @@ exports.getAllReservations = getAllReservations;
  */
 const getAllProperties = function(options, limit = 10) {
   const queryString = `SELECT * FROM properties LIMIT $1`;
-  const limitedProperties = {};
   return pool.query(queryString, [limit])
   .then((result) => {
     return result.rows;
   });
-  // for (let i = 1; i <= limit; i++) {
-  //   limitedProperties[i] = properties[i];
-  // }
-  // return Promise.resolve(limitedProperties);
 }
 exports.getAllProperties = getAllProperties;
 
